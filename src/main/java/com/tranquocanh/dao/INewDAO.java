@@ -14,5 +14,5 @@ public interface INewDAO extends GenericDAO<NewModel>{
 	NewModel findOne(Long id);
 	void update(NewModel updateNews);
 	List<NewModel> findAll(NewBuilder builder, Pageble pageble);
-	Integer getTotalItem();
+	Integer getTotalItem(NewBuilder builder);
 }

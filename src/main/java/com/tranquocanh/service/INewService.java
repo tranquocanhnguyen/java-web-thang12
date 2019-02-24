@@ -13,6 +13,6 @@ public interface INewService {
 	void delete(Long[] ids);
 	NewModel update(NewModel updateNews);
 	List<NewModel> findAll(NewBuilder builder, Pageble pageble);
-	Integer getTotalItem();
+	Integer getTotalItem(NewBuilder builder);
 	NewModel findOne(Long id);
 }				

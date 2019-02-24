@@ -12,6 +12,7 @@ import com.tranquocanh.model.CategoryModel;
 import com.tranquocanh.model.NewModel;
 import com.tranquocanh.service.INewService;
 import com.tranquocanh.paging.Pageble;
+import org.apache.commons.lang3.StringUtils;
 
 public class NewService implements INewService{
 	
@@ -61,9 +62,9 @@ public class NewService implements INewService{
 	}
 
 	@Override
-	public Integer getTotalItem() {
+	public Integer getTotalItem(NewBuilder builder) {
 		// TODO Auto-generated method stub
-		return newDao.getTotalItem();
+		return newDao.getTotalItem(builder);
 	}
 
 	@Override

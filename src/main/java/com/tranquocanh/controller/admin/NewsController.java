@@ -45,10 +45,11 @@ public class NewsController extends HttpServlet{
                 MessageUtil.of(newModel.getMessage(),newModel.getAlert()).buildMessage(request);
             }
 			NewBuilder builder = new NewBuilder.Builder()
-					.setTitle(newModel.getTitle())
-                    .setCategoryCode(newModel.getCategoryCode()).build();
+			        .setTitle(newModel.getTitle())
+					.setCode(newModel.getCategoryCode())
+					.build();
 			Pageble pageble = new PageRequest(newModel.getPage(), newModel.getMaxPageItem(), new Sorter(newModel.getSortName(), newModel.getSortBy()));
-			newModel.setTotalItem(newService.getTotalItem());
+			newModel.setTotalItem(newService.getTotalItem(builder));
 			newModel.setTotalPage((int) Math.ceil((double) newModel.getTotalItem() / newModel.getMaxPageItem())) ;
 			newModel.setListResults(newService.findAll(builder,pageble));
 			view = "/views/admin/news/list.jsp";

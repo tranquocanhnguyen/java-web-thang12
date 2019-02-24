@@ -1,16 +1,25 @@
 package com.tranquocanh.dao.impl;
 
 import com.tranquocanh.builder.NewBuilder;
+import com.tranquocanh.dao.ICategoryDAO;
 import com.tranquocanh.dao.INewDAO;
 import com.tranquocanh.mapper.NewMapper;
+import com.tranquocanh.model.CategoryModel;
 import com.tranquocanh.model.NewModel;
 import com.tranquocanh.paging.Pageble;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class NewDAO extends AbstractDAO<NewModel> implements INewDAO {
 
+
+    @Inject
+    private ICategoryDAO categoryDAO;
 
     @Override
     public List<NewModel> findByCategoryId(Long categoryId) {
@@ -60,7 +69,12 @@ public class NewDAO extends AbstractDAO<NewModel> implements INewDAO {
     @Override
     public List<NewModel> findAll(NewBuilder builder, Pageble pageble) {
         //String sql = "select * from news limit ?, ?" ;
-        StringBuilder sql = new StringBuilder(" select * from news");
+        StringBuilder sql = new StringBuilder(" select * from news as n  ");
+        if(StringUtils.isNotBlank(builder.getCode())) {
+            sql.append("inner join category as c on n.categoryid = c.id ");
+        }
+        sql.append("where 1=1 ");
+        sql = buildNewQuery(sql, builder);
         if (StringUtils.isNotBlank(pageble.getSorter().getSortName()) && StringUtils.isNotBlank(pageble.getSorter().getSortBy())) {
             sql.append(" order by " + pageble.getSorter().getSortName() + " " + pageble.getSorter().getSortBy() + "");
         }
@@ -70,10 +84,55 @@ public class NewDAO extends AbstractDAO<NewModel> implements INewDAO {
         return query(sql.toString(), new NewMapper());
     }
 
+    private StringBuilder buildNewQuery(StringBuilder sql, NewBuilder builder) {
+        Field[] fields = NewBuilder.class.getDeclaredFields();
+        for(Field field: fields) {
+            String fieldType = field.getType().getName();
+            if(fieldType.equals("java.lang.String")) {
+                String value = getValue(field, String.class, builder);
+                if(StringUtils.isNotBlank(value)) {
+                    sql.append(" and lower("+field.getName()+") like '%"+value.toLowerCase()+"%'");
+                }
+            }
+            if(fieldType.equals("java.lang.Integer")) {
+                Integer value = getValue(field, Integer.class, builder);
+                if(value != null) {
+                    sql.append(" and "+field.getName()+" = "+value+" ");
+                }
+            }
+        }
+        return sql;
+    }
+
+    private <T> T getValue(Field field, Class<T> type, NewBuilder builder) {
+        Object result = null;
+        Method getter = getGetter(field,builder);
+        if(getter != null) {
+            try {
+                result = getter.invoke(builder);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        return type.cast(result);
+    }
+
+    private Method getGetter(Field field, NewBuilder builder) {
+        String getterName = "get" + StringUtils.capitalize(field.getName());
+        try {
+            return builder.getClass().getMethod(getterName);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+
     @Override
-    public Integer getTotalItem() {
-        String sql = "select count(*) from news";
-        return getTotalItem(sql);
+    public Integer getTotalItem(NewBuilder builder) {
+        StringBuilder sql = new StringBuilder("select count(*) from news") ;
+        sql.append(" where 1=1 ");
+        sql = buildNewQuery(sql, builder);
+        return getTotalItem(sql.toString());
 
     }
 
